@@ -54,6 +54,7 @@
 
   claudeWrapped = pkgs.symlinkJoin {
     name = "claude-wrapped";
+    inherit (claudePackage) version meta;
     paths = [claudePackage];
     buildInputs = [pkgs.makeWrapper];
     postBuild = ''
