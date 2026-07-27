@@ -6,47 +6,98 @@
 }: let
   claude-status-line = pkgs.writeShellApplication {
     name = "claude-status-line";
-    runtimeInputs = [pkgs.jq pkgs.git pkgs.bc pkgs.coreutils];
+    runtimeInputs = [pkgs.jq pkgs.git pkgs.coreutils];
     text = ''
-      input=$(cat)
+      SEPARATOR=" • "
 
-      model=$(echo "$input" | jq -r '.model.display_name')
-      workspace_dir=$(echo "$input" | jq -r '.workspace.current_dir')
+      segments=()
+      add() {
+        if [ -n "''${1-}" ]; then segments+=("$1"); fi
+      }
 
-      toplevel=$(git -C "$workspace_dir" rev-parse --show-toplevel 2>/dev/null || true)
-      workspace_name=$(basename "''${toplevel:-$workspace_dir}")
-      branch=$(git -C "$workspace_dir" branch --show-current 2>/dev/null || echo 'no-git')
+      git_in() {
+        git -C "$workspace_dir" "$@" 2>/dev/null || true
+      }
 
-      out="$model | $workspace_name | $branch"
+      fields=()
+      while IFS= read -r field; do
+        fields+=("$field")
+      done < <(jq -r '[
+        .model.display_name,
+        .workspace.current_dir,
+        (.worktree.name // .workspace.git_worktree),
+        .effort.level,
+        .context_window.used_percentage,
+        .rate_limits.five_hour.used_percentage,
+        .rate_limits.five_hour.resets_at,
+        .rate_limits.seven_day.used_percentage,
+        .rate_limits.seven_day.resets_at
+      ] | map(. // "" | tostring)[]' 2>/dev/null)
+
+      model=''${fields[0]-}
+      workspace_dir=''${fields[1]-}
+      worktree=''${fields[2]-}
+      effort=''${fields[3]-}
+      ctx=''${fields[4]-}
+      five_used=''${fields[5]-}
+      five_reset=''${fields[6]-}
+      week_used=''${fields[7]-}
+      week_reset=''${fields[8]-}
+
+      workspace_dir=''${workspace_dir:-$PWD}
+
+      toplevel=$(git_in rev-parse --show-toplevel)
+      add "$(basename "''${toplevel:-$workspace_dir}")"
+
+      branch=$(git_in branch --show-current)
+      if [ -n "$branch" ]; then
+        if [ -n "$(git_in status --porcelain)" ]; then
+          branch+="*"
+        fi
+
+        behind=0 ahead=0
+        read -r behind ahead < <(git_in rev-list --left-right --count '@{upstream}...HEAD') || true
+        if [ "''${ahead:-0}" -gt 0 ]; then branch+=" ↑$ahead"; fi
+        if [ "''${behind:-0}" -gt 0 ]; then branch+=" ↓$behind"; fi
+
+        if [ -n "$worktree" ]; then branch+=" [$worktree]"; fi
+      fi
+      add "$branch"
+
+      add "$model"
+      add "$effort"
+
+      if [ -n "$ctx" ]; then
+        add "$(printf '%.0f%% ctx' "$ctx")"
+      fi
 
       now=$(date +%s)
 
-      five_used=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
-      five_reset=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
       if [ -n "$five_used" ]; then
-        five_rem=$(printf '%.0f' "$(echo "100 - $five_used" | bc -l)")
+        five=$(printf '%.0f%%/5h' "$five_used")
         if [ -n "$five_reset" ]; then
-          five_at=$(date -d "@$five_reset" +'%-l:%M%P')
-          out="$out | ''${five_rem}%/5h ($five_at)"
-        else
-          out="$out | ''${five_rem}%/5h"
+          five+=" ($(date -d "@$five_reset" +'%-l:%M%P'))"
         fi
+        add "$five"
       fi
 
-      week_used=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
-      week_reset=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
       if [ -n "$week_used" ]; then
-        week_rem=$(printf '%.0f' "$(echo "100 - $week_used" | bc -l)")
+        week=$(printf '%.0f%%/wk' "$week_used")
         if [ -n "$week_reset" ]; then
           days=$(( (week_reset - now + 86399) / 86400 ))
-          [ "$days" -lt 0 ] && days=0
-          out="$out | ''${week_rem}%/wk (''${days}d)"
-        else
-          out="$out | ''${week_rem}%/wk"
+          if [ "$days" -lt 0 ]; then days=0; fi
+          week+=" (''${days}d)"
         fi
+        add "$week"
       fi
 
-      echo "$out"
+      if [ ''${#segments[@]} -gt 0 ]; then
+        line=''${segments[0]}
+        for segment in "''${segments[@]:1}"; do
+          line+="$SEPARATOR$segment"
+        done
+        printf '%s\n' "$line"
+      fi
     '';
   };
 
