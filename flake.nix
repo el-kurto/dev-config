@@ -24,10 +24,8 @@
       systems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
 
       flake = {
-        # Aggregate dev-tooling bundle (home-manager).
         homeManagerModules.default = import ./modules/default.nix {inherit claude-code;};
 
-        # Cherry-pick individual tool modules (home-manager).
         homeManagerModules.tmux = ./modules/tmux.nix;
         homeManagerModules.zsh = ./modules/zsh.nix;
         homeManagerModules.lazygit = ./modules/lazygit.nix;
