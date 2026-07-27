@@ -1,5 +1,5 @@
 {
-  description = "Shared, portable dev tooling (neovim, tmux, lazygit, direnv, devenv, claude-code).";
+  description = "Shared, portable dev tooling (neovim, tmux, zsh, lazygit, direnv, devenv, claude-code).";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -29,6 +29,7 @@
 
         # Cherry-pick individual tool modules (home-manager).
         homeManagerModules.tmux = ./modules/tmux.nix;
+        homeManagerModules.zsh = ./modules/zsh.nix;
         homeManagerModules.lazygit = ./modules/lazygit.nix;
         homeManagerModules.direnv = ./modules/direnv.nix;
         homeManagerModules.devenv = ./modules/devenv.nix;
