@@ -2,10 +2,31 @@
 
 Shared, portable dev tooling — OS-agnostic (NixOS, nix-darwin, nixos-wsl) and
 theme-agnostic. Bundles [nvf](https://github.com/notashelf/nvf) (neovim), tmux,
-lazygit, direnv/nix-direnv, devenv, and a claude-code base.
+zsh, lazygit, direnv/nix-direnv, devenv, and a claude-code base.
 
-Each host **extends, merges, or overrides** this common base. Nothing here is
-host-, project-, or OS-specific; theming (stylix palette) is host-owned.
+Each host **owns the `enable` decision and extends, merges, or overrides** this
+common base. Nothing here is host-, project-, or OS-specific; theming (stylix
+palette) is host-owned.
+
+## How it works
+
+The tool modules **self-gate on their upstream `enable` option**. Importing a
+module (or the bundle) does **not** turn anything on — it only layers the shared
+base config *when the host has enabled that tool*:
+
+```nix
+# host-side
+programs.zsh.enable = true;   # host decides
+# dev-config then fills in prezto, pmodules, etc. via `mkIf config.programs.zsh.enable`
+```
+
+This keeps the bundle inert until opted into, so a single `imports = [ default ]`
+is safe everywhere — headless hosts that never enable these tools get nothing.
+
+Opinionated scalar defaults (tmux `prefix`, `historyLimit`, …) are set with
+`lib.mkDefault`, so a host can override them by plain assignment — no `mkForce`.
+List/lines/attr options (permissions, `extraConfig`, prezto `pmodules`, claude
+`context`) **merge** with host additions automatically.
 
 ## Usage
 
@@ -25,22 +46,36 @@ dev-config.inputs.claude-code.follows = "claude-code";
 
 ### Dev tooling (home-manager)
 
-Import the aggregate bundle (tmux + lazygit + direnv + claude), or cherry-pick:
+Import the aggregate bundle (tmux + zsh + lazygit + direnv + claude), or
+cherry-pick, then **enable the tools you want host-side**:
 
 ```nix
 imports = [
-  inputs.dev-config.homeManagerModules.default   # tmux + lazygit + direnv + claude
+  inputs.dev-config.homeManagerModules.default   # tmux + zsh + lazygit + direnv + claude
   # or cherry-pick:
   # inputs.dev-config.homeManagerModules.tmux
+  # inputs.dev-config.homeManagerModules.zsh
   # inputs.dev-config.homeManagerModules.lazygit
   # inputs.dev-config.homeManagerModules.direnv
   # inputs.dev-config.homeManagerModules.devenv   # not in default — gate host-side
   # inputs.dev-config.homeManagerModules.claude
 ];
+
+programs = {
+  tmux.enable = true;
+  zsh.enable = true;
+  lazygit.enable = true;
+  direnv.enable = true;
+  claude-code.enable = true;
+};
 ```
 
-`devenv` is exported separately (not in `default`) so hosts can gate it behind
-a `development` trait. Themed bits (tmux status bar / pane colors, delta color
+`zsh` needs a system-level `programs.zsh.enable` too (and a login-shell switch)
+if you want it as the interactive shell — that's a host concern, not part of
+this home-manager bundle.
+
+`devenv` is exported separately (not in `default`) so hosts can gate it behind a
+`development` trait. Themed bits (tmux status bar / pane colors, delta color
 config) are **not** included — layer them host-side from your palette.
 
 ### nvf (unchanged API)
@@ -62,6 +97,7 @@ flake.nix              # inputs (nixpkgs, nvf, claude-code) + module exports
 modules/
   default.nix          # aggregate dev-tooling bundle
   tmux.nix             # theme-free tmux
+  zsh.nix              # prezto base
   lazygit.nix
   direnv.nix           # direnv + nix-direnv
   devenv.nix           # devenv package (cherry-pick, host-gated)
