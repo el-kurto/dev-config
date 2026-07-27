@@ -191,8 +191,6 @@ in {
     };
 
     context = ''
-      IMPORTANT: `sed` and `bash` on MacOS were installed via `nixpkgs` and use the GNU params.
-
       IMPORTANT: Do not write comments in code unless explicitly requested by the user.
 
       IMPORTANT: Do not write ad-hoc Python scripts.
