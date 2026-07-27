@@ -1,7 +1,10 @@
-{...}: {
-  programs.lazygit = {
-    enable = true;
-    settings = {
+{
+  lib,
+  config,
+  ...
+}: {
+  config = lib.mkIf config.programs.lazygit.enable {
+    programs.lazygit.settings = {
       gui = {
         nerdFontsVersion = "3";
         showFileTree = true;

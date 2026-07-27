@@ -1,6 +1,7 @@
 {claude-code}: {
   pkgs,
   lib,
+  config,
   ...
 }: let
   claude-status-line = pkgs.writeShellApplication {
@@ -65,20 +66,19 @@
     '';
   };
 in {
-  programs.codex.enable = false;
+  programs.codex.enable = lib.mkDefault false;
 
-  programs.claude-code = {
-    enable = true;
-    package = claudeWrapped;
+  programs.claude-code = lib.mkIf config.programs.claude-code.enable {
+    package = lib.mkDefault claudeWrapped;
 
     settings = {
-      model = "opus";
-      includeCoAuthoredBy = false;
-      alwaysThinkingEnabled = false;
-      autoCompactEnabled = true;
-      feedbackSurveyRate = 0;
-      respectGitignore = true;
-      statusLine = {
+      model = lib.mkDefault "opus";
+      includeCoAuthoredBy = lib.mkDefault false;
+      alwaysThinkingEnabled = lib.mkDefault false;
+      autoCompactEnabled = lib.mkDefault true;
+      feedbackSurveyRate = lib.mkDefault 0;
+      respectGitignore = lib.mkDefault true;
+      statusLine = lib.mkDefault {
         type = "command";
         command = "${lib.getExe claude-status-line}";
       };
