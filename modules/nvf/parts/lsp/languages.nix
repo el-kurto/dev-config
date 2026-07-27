@@ -25,7 +25,7 @@
     json.enable = true;
     lua.enable = true;
     markdown.enable = true;
-    markdown.format.type = ["prettierd"];
+    markdown.format.type = ["prettier"];
     markdown.extensions.markview-nvim.enable = true;
     nix.enable = true;
     sql.enable = true;
