@@ -11,13 +11,12 @@
         showBottomLine = true;
         showRandomTip = false;
         showCommandLog = false;
-        showIcons = true;
       };
       git = {
-        pagers = [
+        diffRenderers = [
           {
             name = "delta";
-            pager = "delta --dark --paging=never";
+            command = "delta --dark --paging=never";
           }
         ];
       };
