@@ -93,10 +93,19 @@ imports = [
 The nvf module sets no colors or `theme.enable`; layer those alongside the
 import via `programs.nvf.settings.vim = lib.mkMerge [ ... ]`.
 
+## Development
+
+This repo uses [devenv](https://devenv.sh). With direnv, `cd` in and the
+environment loads (`direnv allow` once). Otherwise run `devenv shell`.
+
+Formatting and lint (alejandra, deadnix, statix) run as git hooks on commit;
+`pre-commit run --all-files` runs them manually.
+
 ## Structure
 
 ```
 flake.nix              # inputs (nixpkgs, nvf, claude-code) + module exports
+devenv.nix             # dev shell for this repo (git hooks)
 modules/
   default.nix          # aggregate dev-tooling bundle
   tmux.nix             # theme-free tmux
