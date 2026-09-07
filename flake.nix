@@ -29,6 +29,7 @@
         homeManagerModules.tmux = ./modules/tmux.nix;
         homeManagerModules.zsh = ./modules/zsh.nix;
         homeManagerModules.lazygit = ./modules/lazygit.nix;
+        homeManagerModules.git = ./modules/git.nix;
         homeManagerModules.direnv = ./modules/direnv.nix;
         homeManagerModules.devenv = ./modules/devenv.nix;
         homeManagerModules.claude = import ./modules/claude.nix {inherit claude-code;};
