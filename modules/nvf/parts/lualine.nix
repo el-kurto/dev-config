@@ -1,5 +1,8 @@
-_: let
+{lib, ...}: let
+  inherit (lib.generators) mkLuaInline;
+
   worktreeComponent =
+    mkLuaInline
     # lua
     ''
       function()
@@ -19,16 +22,24 @@ _: let
     '';
 in {
   statusline.lualine.enable = true;
-  statusline.lualine.sectionSeparator.left = "";
-  statusline.lualine.sectionSeparator.right = "";
-  statusline.lualine.componentSeparator.left = "";
-  statusline.lualine.componentSeparator.right = "";
+  statusline.lualine.setupOpts.options = {
+    section_separators = {
+      left = "";
+      right = "";
+    };
+    component_separators = {
+      left = "";
+      right = "";
+    };
+  };
 
-  # statusline.lualine.activeSection.a = [''"mode"'']; # using defaults
-  statusline.lualine.activeSection.b = [''"branch"'' worktreeComponent];
-  statusline.lualine.activeSection.c = [''"lsp_status"''];
+  # sections.lualine_a = ["mode"]; # using defaults
+  statusline.lualine.setupOpts.sections = {
+    lualine_b = ["branch" worktreeComponent];
+    lualine_c = ["lsp_status"];
 
-  statusline.lualine.activeSection.x = [''"encoding"''];
-  statusline.lualine.activeSection.y = [''"progress"''];
-  statusline.lualine.activeSection.z = [''"%l:%c"''];
+    lualine_x = ["encoding"];
+    lualine_y = ["progress"];
+    lualine_z = ["%l:%c"];
+  };
 }
