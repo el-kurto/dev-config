@@ -103,19 +103,28 @@
 
   claudePackage = claude-code.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
 
+  languageServers = [
+    pkgs.csharp-ls
+    pkgs.typescript-language-server
+    pkgs.gopls
+  ];
+
   claudeWrapped = pkgs.symlinkJoin {
     name = "claude-wrapped";
     inherit (claudePackage) version meta;
     paths = [claudePackage];
     buildInputs = [pkgs.makeWrapper];
-    postBuild = ''
-      wrapProgram $out/bin/claude \
-        --set DISABLE_TELEMETRY 1 \
-        --set DISABLE_ERROR_REPORTING 1 \
-        --set DISABLE_FEEDBACK_COMMAND 1 \
-        --set CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY 1 \
-        --set CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC 1
-    '';
+    postBuild =
+      # bash
+      ''
+        wrapProgram $out/bin/claude \
+          --set DISABLE_TELEMETRY 1 \
+          --set DISABLE_ERROR_REPORTING 1 \
+          --set DISABLE_FEEDBACK_COMMAND 1 \
+          --set CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY 1 \
+          --set CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC 1 \
+          --prefix PATH : ${lib.makeBinPath languageServers}
+      '';
   };
 in {
   programs.codex.enable = lib.mkDefault false;
@@ -137,6 +146,7 @@ in {
       enabledPlugins = {
         "typescript-lsp@claude-plugins-official" = true;
         "csharp-lsp@claude-plugins-official" = true;
+        "gopls-lsp@claude-plugins-official" = true;
       };
       permissions = {
         allow = [
