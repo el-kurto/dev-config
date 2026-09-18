@@ -110,10 +110,15 @@ a git worktree, so it cannot litter `$HOME` or a scratch directory.
 
 ```nix
 imports = [
-  inputs.dev-config.nixosModules.codegraph      # or darwinModules — CLI on PATH only
+  inputs.dev-config.codegraphModules.system      # CLI on PATH only
   inputs.dev-config.homeManagerModules.codegraph # CLI + Claude Code hooks
 ];
 ```
+
+`codegraphModules.system` is also exported as `nixosModules.codegraph` and
+`darwinModules.codegraph` — the same file, since it only sets
+`environment.systemPackages`. Prefer the neutral name in a config that is shared
+between the two.
 
 The system module is only needed for hosts that reach the package outside a
 home-manager user (e.g. reading `config.programs.codegraph.package` to build a

@@ -37,7 +37,11 @@
         # codegraph — the home module carries the Claude Code hooks; the system
         # module only puts the CLI on PATH, for hosts that run it outside a
         # home-manager user (agents-sbx reads .package off the system config).
+        # `codegraphModules.system` is the platform-neutral name: the module only
+        # touches `environment.systemPackages`, which NixOS and nix-darwin share,
+        # so a config imported by both can name it without branching.
         homeManagerModules.codegraph = ./modules/codegraph/home.nix;
+        codegraphModules.system = ./modules/codegraph/system.nix;
         nixosModules.codegraph = ./modules/codegraph/system.nix;
         darwinModules.codegraph = ./modules/codegraph/system.nix;
 
