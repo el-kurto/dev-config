@@ -34,6 +34,13 @@
         homeManagerModules.devenv = ./modules/devenv.nix;
         homeManagerModules.claude = import ./modules/claude.nix {inherit claude-code;};
 
+        # codegraph — the home module carries the Claude Code hooks; the system
+        # module only puts the CLI on PATH, for hosts that run it outside a
+        # home-manager user (agents-sbx reads .package off the system config).
+        homeManagerModules.codegraph = ./modules/codegraph/home.nix;
+        nixosModules.codegraph = ./modules/codegraph/system.nix;
+        darwinModules.codegraph = ./modules/codegraph/system.nix;
+
         # nvf config — unchanged API (nixos_config imports nvfModules.default).
         nvfModules.default = ./modules/nvf/nvf.nix;
         nixosModules.nvf = ./modules/nvf/nvf.nix;

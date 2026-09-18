@@ -2,7 +2,7 @@
 
 Shared, portable dev tooling — OS-agnostic (NixOS, nix-darwin, nixos-wsl) and
 theme-agnostic. Bundles [nvf](https://github.com/notashelf/nvf) (neovim), tmux,
-zsh, lazygit, direnv/nix-direnv, devenv, and a claude-code base.
+zsh, lazygit, direnv/nix-direnv, devenv, codegraph, and a claude-code base.
 
 Importing a module does not enable anything. Each consumer owns the `enable`
 decision; these modules only layer shared config on top once a tool is enabled.
@@ -56,6 +56,7 @@ imports = [
   # inputs.dev-config.homeManagerModules.direnv
   # inputs.dev-config.homeManagerModules.devenv   # not in default
   # inputs.dev-config.homeManagerModules.claude
+  # inputs.dev-config.homeManagerModules.codegraph
 ];
 
 programs = {
@@ -64,6 +65,7 @@ programs = {
   lazygit.enable = true;
   direnv.enable = true;
   claude-code.enable = true;
+  codegraph.enable = true;
 };
 ```
 
@@ -93,6 +95,30 @@ imports = [
 The nvf module sets no colors or `theme.enable`; layer those alongside the
 import via `programs.nvf.settings.vim = lib.mkMerge [ ... ]`.
 
+### codegraph
+
+`programs.codegraph.enable` installs the CLI wrapped with telemetry and the
+bundled daemon off. The home-manager module additionally wires it into Claude
+Code's `SessionStart`, `UserPromptSubmit` and `PostToolUse` hooks — indexing a
+repo on first open, putting symbol locators in front of the model, and keeping
+the graph current as it edits. Set `programs.codegraph.claudeHooks = false` for
+the CLI alone.
+
+The hooks are inert without an index: every one of them no-ops unless the
+working directory has a `.codegraph/`, and the init hook only creates one inside
+a git worktree, so it cannot litter `$HOME` or a scratch directory.
+
+```nix
+imports = [
+  inputs.dev-config.nixosModules.codegraph      # or darwinModules — CLI on PATH only
+  inputs.dev-config.homeManagerModules.codegraph # CLI + Claude Code hooks
+];
+```
+
+The system module is only needed for hosts that reach the package outside a
+home-manager user (e.g. reading `config.programs.codegraph.package` to build a
+service's `PATH`); for a normal workstation the home-manager module is enough.
+
 ## Development
 
 This repo uses [devenv](https://devenv.sh). With direnv, `cd` in and the
@@ -114,6 +140,11 @@ modules/
   direnv.nix           # direnv + nix-direnv
   devenv.nix           # devenv + direnv `use devenv` hook (cherry-pick)
   claude.nix           # wrapped claude-code + permissions/context/settings
+  codegraph/
+    options.nix        # shared enable/package options
+    package.nix        # CLI wrapped with telemetry + daemon off
+    home.nix           # CLI + Claude Code hooks
+    system.nix         # CLI on PATH (NixOS / darwin)
   nvf/
     nvf.nix            # enables nvf, merges parts into settings.vim
     parts/             # one file per concern
