@@ -11,6 +11,7 @@
       ".devenv*"
       "devenv.local.nix"
       "devenv.local.yaml"
+      ".codegraph"
     ];
 
     programs.git.settings = {
