@@ -118,6 +118,8 @@ in {
   config = lib.mkIf cfg.enable {
     home.packages = [cfg.package];
 
+    programs.claude-code.settings.permissions.allow = ["Bash(codegraph:*)"];
+
     programs.claude-code.settings.hooks = lib.mkIf cfg.claudeHooks {
       SessionStart = [(cmd initHook)];
       UserPromptSubmit = [(cmd contextHook)];
