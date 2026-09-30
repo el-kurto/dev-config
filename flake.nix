@@ -49,6 +49,12 @@
       perSystem = {pkgs, ...}: {
         formatter = pkgs.alejandra;
 
+        packages.codegraph-hook = import ./modules/codegraph/hook.nix {
+          inherit pkgs;
+          inherit (pkgs) lib;
+          codegraph = import ./modules/codegraph/package.nix pkgs;
+        };
+
         packages.default =
           (nvf.lib.neovimConfiguration {
             inherit pkgs;
