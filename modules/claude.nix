@@ -104,7 +104,6 @@
   claudePackage = claude-code.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
 
   languageServers = [
-    pkgs.csharp-ls
     pkgs.typescript-language-server
     pkgs.gopls
   ];
@@ -145,7 +144,7 @@ in {
       };
       enabledPlugins = {
         "typescript-lsp@claude-plugins-official" = true;
-        "csharp-lsp@claude-plugins-official" = true;
+        "csharp-lsp@claude-plugins-official" = false;
         "gopls-lsp@claude-plugins-official" = true;
       };
       permissions = {
