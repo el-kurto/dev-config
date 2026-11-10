@@ -136,6 +136,7 @@ in {
       includeCoAuthoredBy = lib.mkDefault false;
       alwaysThinkingEnabled = lib.mkDefault false;
       autoCompactEnabled = lib.mkDefault true;
+      idleCompaction = lib.mkDefault false;
       feedbackSurveyRate = lib.mkDefault 0;
       respectGitignore = lib.mkDefault true;
       statusLine = lib.mkDefault {
