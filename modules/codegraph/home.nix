@@ -32,8 +32,9 @@ in {
           seeded from a sibling's index) the first time the session touches it,
           keep the graph current through edits, shell commands and HEAD moves,
           and put locators in front of both the model and the subagents it
-          spawns. codegraph's own MCP server and CLAUDE.md blurb both leave it
-          to the model to decide to call it; these do not.
+          spawns. Subagent locators go in through SubagentStart rather than by
+          rewriting the Agent call, so permission checks see exactly what the
+          model sent.
         '';
       };
     };
@@ -50,6 +51,7 @@ in {
       FileChanged = [hook];
       UserPromptSubmit = [hook];
       PreToolUse = [(hook // {matcher = "Agent|Task";})];
+      SubagentStart = [hook];
       PostToolUse = [(hook // {matcher = "Write|Edit|MultiEdit|NotebookEdit|Bash";})];
     };
   };

@@ -167,23 +167,26 @@ func TestEndToEnd(t *testing.T) {
 		}
 	})
 
-	t.Run("subagent prompts get locators, other input is kept", func(t *testing.T) {
+	t.Run("subagents get locators without the tool call being rewritten", func(t *testing.T) {
+		handoffRoot = t.TempDir()
 		raw, _ := json.Marshal(map[string]string{"description": "d", "subagent_type": "Explore", "prompt": prompt})
-		out := handle(input{Event: "PreToolUse", ToolName: "Agent", Cwd: main, ToolInput: raw})
+		for _, tool := range []string{"Agent", "Bash"} {
+			if out := handle(input{Event: "PreToolUse", ToolName: tool, SessionID: "s", Cwd: main, ToolInput: raw}); out != nil {
+				t.Fatalf("%s: unexpected output %v", tool, out)
+			}
+		}
+		if out := handle(input{Event: "SubagentStart", SessionID: "s", AgentType: "Plan"}); out != nil {
+			t.Fatalf("other agent type got %v", out)
+		}
+		out := handle(input{Event: "SubagentStart", SessionID: "s", AgentType: "Explore"})
 		if out == nil {
 			t.Fatal("no output")
 		}
-		updated, _ := out.HookSpecificOutput["updatedInput"].(map[string]any)
-		got, _ := updated["prompt"].(string)
-		if updated["subagent_type"] != "Explore" || !strings.HasPrefix(got, prompt+"\n\n"+header) {
-			t.Fatalf("updatedInput = %v", updated)
+		if ctx, _ := out.HookSpecificOutput["additionalContext"].(string); !strings.Contains(ctx, "computeInvoiceTotal — src/invoice.ts:1") {
+			t.Fatalf("additionalContext = %q", ctx)
 		}
-	})
-
-	t.Run("other tools are left alone", func(t *testing.T) {
-		raw, _ := json.Marshal(map[string]string{"prompt": prompt})
-		if out := handle(input{Event: "PreToolUse", ToolName: "Bash", Cwd: main, ToolInput: raw}); out != nil {
-			t.Fatalf("unexpected output %v", out)
+		if out := handle(input{Event: "SubagentStart", SessionID: "s", AgentType: "Explore"}); out != nil {
+			t.Fatalf("locators claimed twice: %v", out)
 		}
 	})
 }

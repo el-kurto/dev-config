@@ -12,6 +12,8 @@ var (
 
 type input struct {
 	Event     string          `json:"hook_event_name"`
+	SessionID string          `json:"session_id"`
+	AgentType string          `json:"agent_type"`
 	Cwd       string          `json:"cwd"`
 	Prompt    string          `json:"prompt"`
 	ToolName  string          `json:"tool_name"`
@@ -93,18 +95,22 @@ func handle(in input) *output {
 		if in.ToolName != "Agent" && in.ToolName != "Task" {
 			return nil
 		}
-		var tool map[string]any
+		var tool struct {
+			Prompt       string `json:"prompt"`
+			SubagentType string `json:"subagent_type"`
+		}
 		if json.Unmarshal(in.ToolInput, &tool) != nil {
 			return nil
 		}
-		prompt, _ := tool["prompt"].(string)
-		root, ok := rootOf(in.Cwd)
-		if !ok {
-			return nil
+		if root, ok := rootOf(in.Cwd); ok {
+			if ctx := locators(root, tool.Prompt); ctx != "" {
+				stash(in.SessionID, tool.SubagentType, ctx)
+			}
 		}
-		if ctx := locators(root, prompt); ctx != "" {
-			tool["prompt"] = prompt + "\n\n" + ctx
-			return hookOutput(in.Event, "updatedInput", tool)
+
+	case "SubagentStart":
+		if ctx := claim(in.SessionID, in.AgentType); ctx != "" {
+			return hookOutput(in.Event, "additionalContext", ctx)
 		}
 	}
 	return nil
